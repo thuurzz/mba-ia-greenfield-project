@@ -28,7 +28,7 @@ export default async function ChannelPage({ params, searchParams }: PageProps) {
   if (!channelRes.ok) return <div className="p-8 text-center">Channel not found</div>;
   const channel: Channel = await channelRes.json();
 
-  const url = `${env.API_URL}/channels/${nickname}/videos?limit=12${cursor ? `&cursor=${cursor}` : ""}`;
+  const url = `${env.API_URL}/videos/channel/${nickname}?limit=12${cursor ? `&cursor=${cursor}` : ""}`;
   const videosRes = await fetch(url, { cache: "no-store" });
   const videosData = await videosRes.json();
   const videos: Video[] = videosData.videos || [];

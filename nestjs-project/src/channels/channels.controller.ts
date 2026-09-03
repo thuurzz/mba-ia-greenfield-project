@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, Query, NotFoundException } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { Public } from '../auth/decorators/public.decorator';

@@ -40,4 +40,24 @@ export const handlers = [
       nextCursor: null,
     });
   }),
+
+  http.post(`${env.API_URL}/videos/:id/view`, () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get(`${env.API_URL}/videos/:id/suggested`, () => {
+    return HttpResponse.json([
+      { id: "sug-1", title: "Suggested 1", thumbnailUrl: null, viewCount: 10 },
+      { id: "sug-2", title: "Suggested 2", thumbnailUrl: null, viewCount: 20 },
+    ]);
+  }),
+
+  http.get(`${env.API_URL}/videos/channel/:nickname`, () => {
+    return HttpResponse.json({
+      videos: [
+        { id: "v1", title: "Channel Video 1", thumbnailUrl: null, viewCount: 10, createdAt: "2026-09-01T00:00:00Z" },
+      ],
+      nextCursor: null,
+    });
+  }),
 ];

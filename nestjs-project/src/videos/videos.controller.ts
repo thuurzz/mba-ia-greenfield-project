@@ -75,6 +75,37 @@ export class VideosController {
     });
   }
 
+  @Public()
+  @Get('channel/:nickname')
+  async findByChannelNickname(
+    @Param('nickname') nickname: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const channel = await this.channelsService.findByNickname(nickname);
+    if (!channel) throw new NotFoundException('CHANNEL_NOT_FOUND');
+    return this.videosService.findByChannelPublic(channel.id, {
+      cursor,
+      limit: parseInt(limit || '12', 10),
+    });
+  }
+
+  @Post(':id/view')
+  @Public()
+  async recordView(@Param('id') id: string, @Req() req: Request) {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    await this.videosService.recordView(id, ip);
+    return { success: true };
+  }
+
+  @Public()
+  @Get(':id/suggested')
+  async findSuggested(@Param('id') id: string) {
+    const video = await this.videosService.findById(id);
+    if (!video) throw new NotFoundException('VIDEO_NOT_FOUND');
+    return this.videosService.findSuggested(id, video.categoryId);
+  }
+
   @Post(':id/thumbnail')
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: 2 * 1024 * 1024 },
