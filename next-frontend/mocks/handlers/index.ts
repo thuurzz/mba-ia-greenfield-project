@@ -1,5 +1,13 @@
 import { handlers as authHandlers } from "./auth";
 import { handlers as seedHandlers } from "./_seed";
 import { handlers as videoHandlers } from "./videos";
+import { handlers as categoryHandlers } from "./categories";
+import { handlers as channelHandlers } from "./channels";
 
-export const handlers = [...authHandlers, ...seedHandlers, ...videoHandlers];
+export const handlers = [
+  ...authHandlers,
+  ...seedHandlers,
+  ...videoHandlers,
+  ...categoryHandlers,
+  ...channelHandlers,
+];

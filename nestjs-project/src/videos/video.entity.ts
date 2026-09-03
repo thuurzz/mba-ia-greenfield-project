@@ -103,6 +103,9 @@ export class Video {
   @Column({ name: 'view_count', type: 'integer', default: 0 })
   viewCount: number;
 
+  @Column({ name: 'published_at', type: 'timestamp', nullable: true })
+  publishedAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

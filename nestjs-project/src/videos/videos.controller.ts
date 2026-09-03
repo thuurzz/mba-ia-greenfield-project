@@ -2,13 +2,21 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Param,
+  Body,
+  Query,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
   Req,
   Res,
   NotFoundException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { VideosService } from './videos.service';
+import { UpdateVideoDto } from './dto/update-video.dto';
 import { ChannelsService } from '../channels/channels.service';
 import { StorageService } from './storage.service';
 import { Public } from '../auth/decorators/public.decorator';
@@ -38,6 +46,61 @@ export class VideosController {
       id: video.id,
       uploadUrl: `/api/videos/upload/${video.id}`,
     };
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateVideoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const channel = await this.channelsService.findByUserId(user.sub);
+    if (!channel) throw new NotFoundException('CHANNEL_NOT_FOUND');
+    return this.videosService.updateVideo(id, channel.id, dto);
+  }
+
+  @Get()
+  async findByChannel(
+    @CurrentUser() user: JwtPayload,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ) {
+    const channel = await this.channelsService.findByUserId(user.sub);
+    if (!channel) throw new NotFoundException('CHANNEL_NOT_FOUND');
+    return this.videosService.findByChannel(channel.id, {
+      cursor,
+      limit: parseInt(limit || '20', 10),
+      status,
+    });
+  }
+
+  @Post(':id/thumbnail')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!file.mimetype.match(/^image\/(jpeg|png|webp)$/)) {
+        cb(new BadRequestException('THUMBNAIL_INVALID_TYPE'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  async uploadThumbnail(
+    @Param('id') id: string,
+    @UploadedFile() file: any,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const channel = await this.channelsService.findByUserId(user.sub);
+    if (!channel) throw new NotFoundException('CHANNEL_NOT_FOUND');
+    const video = await this.videosService.findById(id);
+    if (!video || video.channelId !== channel.id) {
+      throw new NotFoundException('VIDEO_NOT_FOUND');
+    }
+    const ext = file.mimetype.split('/')[1];
+    const key = `thumbnails/${id}-custom.${ext}`;
+    await this.storageService.uploadFile(key, file.buffer, file.mimetype);
+    await this.videosService.updateVideoMetadata(id, { thumbnailUrl: key });
+    return { thumbnailUrl: key };
   }
 
   @Public()

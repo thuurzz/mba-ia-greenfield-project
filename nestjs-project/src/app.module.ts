@@ -13,6 +13,7 @@ import databaseConfig from './config/database.config';
 import mailConfig from './config/mail.config';
 import swaggerConfig from './config/swagger.config';
 import queueConfig from './config/queue.config';
+import storageConfig from './config/storage.config';
 import { envValidationSchema } from './config/env.validation';
 
 @Module({
@@ -26,6 +27,7 @@ import { envValidationSchema } from './config/env.validation';
         mailConfig,
         swaggerConfig,
         queueConfig,
+        storageConfig,
       ],
       validationSchema: envValidationSchema,
       validationOptions: { allowUnknown: true, abortEarly: false },

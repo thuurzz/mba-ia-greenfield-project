@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { DataSource, QueryFailedError } from 'typeorm';
 import { appendRandomSuffix, sanitizeNickname } from './nickname.util';
 import { Channel } from './entities/channel.entity';
@@ -64,5 +64,24 @@ export class ChannelsService {
     return this.dataSource.manager.findOne(Channel, {
       where: { user_id: userId },
     });
+  }
+
+  async findByNickname(nickname: string): Promise<Channel | null> {
+    return this.dataSource.manager.findOne(Channel, {
+      where: { nickname },
+    });
+  }
+
+  async updateChannel(id: string, dto: Partial<Channel>): Promise<Channel> {
+    if (dto.nickname) {
+      const existing = await this.dataSource.manager.findOne(Channel, {
+        where: { nickname: dto.nickname },
+      });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('NICKNAME_ALREADY_TAKEN');
+      }
+    }
+    await this.dataSource.manager.update(Channel, id, dto);
+    return this.dataSource.manager.findOne(Channel, { where: { id } }) as Promise<Channel>;
   }
 }

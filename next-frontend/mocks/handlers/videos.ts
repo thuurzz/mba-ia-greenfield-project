@@ -19,4 +19,25 @@ export const handlers = [
       viewCount: 0,
     });
   }),
+
+  http.patch(`${env.API_URL}/videos/:id`, async ({ params, request }) => {
+    const { id } = params;
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({
+      id,
+      title: body.title || null,
+      description: body.description || null,
+      visibility: body.visibility || "public",
+      status: "ready",
+    });
+  }),
+
+  http.get(`${env.API_URL}/videos`, () => {
+    return HttpResponse.json({
+      videos: [
+        { id: "vid-1", title: "Test Video", status: "ready", visibility: "public", viewCount: 42, createdAt: "2026-09-01T00:00:00Z" },
+      ],
+      nextCursor: null,
+    });
+  }),
 ];
