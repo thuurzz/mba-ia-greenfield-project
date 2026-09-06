@@ -103,6 +103,12 @@ export class Video {
   @Column({ name: 'view_count', type: 'integer', default: 0 })
   viewCount: number;
 
+  @Column({ name: 'likes_count', type: 'integer', default: 0 })
+  likesCount: number;
+
+  @Column({ name: 'dislikes_count', type: 'integer', default: 0 })
+  dislikesCount: number;
+
   @Column({ name: 'published_at', type: 'timestamp', nullable: true })
   publishedAt: Date | null;
 

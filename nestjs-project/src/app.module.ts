@@ -6,6 +6,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { VideosModule } from './videos/videos.module';
+import { CommentsModule } from './videos/comments/comments.module';
+import { SocialModule } from './social/social.module';
 import { VideoWorkerModule } from './video-worker/video-worker.module';
 import appConfig from './config/app.config';
 import authConfig from './config/auth.config';
@@ -48,6 +50,8 @@ import { envValidationSchema } from './config/env.validation';
     }),
     AuthModule,
     VideosModule,
+    CommentsModule,
+    SocialModule,
     VideoWorkerModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],

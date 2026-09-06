@@ -16,6 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { VideosService } from './videos.service';
+import { LikesService } from './likes.service';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { ChannelsService } from '../channels/channels.service';
 import { StorageService } from './storage.service';
@@ -29,6 +30,7 @@ export class VideosController {
     private videosService: VideosService,
     private channelsService: ChannelsService,
     private storageService: StorageService,
+    private likesService: LikesService,
   ) {}
 
   @Post()
@@ -96,6 +98,22 @@ export class VideosController {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     await this.videosService.recordView(id, ip);
     return { success: true };
+  }
+
+  @Post(':id/like')
+  async like(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.likesService.toggleLike(id, user.sub, true);
+  }
+
+  @Post(':id/dislike')
+  async dislike(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.likesService.toggleLike(id, user.sub, false);
+  }
+
+  @Public()
+  @Get(':id/likes')
+  async getLikes(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
+    return this.likesService.getLikes(id, user?.sub);
   }
 
   @Public()
