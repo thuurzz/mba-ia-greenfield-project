@@ -38,7 +38,10 @@ export default async function WatchPage({ params }: PageProps) {
   const suggestedRes = await fetch(`${env.API_URL}/videos/${id}/suggested`, { cache: "no-store" });
   const suggested = await suggestedRes.json();
 
-  const streamUrl = `${env.API_URL}/videos/${id}/stream/playlist.m3u8`;
+  const isHlsReady = Boolean(video.hlsPlaylistUrl);
+  const streamUrl = isHlsReady
+    ? `/api/videos/${id}/stream/master.m3u8`
+    : `/api/videos/${id}/stream/source.mp4`;
 
   return (
     <main className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">

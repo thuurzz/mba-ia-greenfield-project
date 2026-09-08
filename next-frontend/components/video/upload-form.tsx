@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import * as tus from "tus-js-client";
 
 interface UploadState {
   progress: number;
-  status: "idle" | "uploading" | "paused" | "done" | "error";
+  status: "idle" | "uploading" | "done" | "error";
   error?: string;
   videoId?: string;
 }
@@ -13,7 +12,7 @@ interface UploadState {
 export function UploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<UploadState>({ progress: 0, status: "idle" });
-  const uploadRef = useRef<tus.Upload | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const startUpload = useCallback(async () => {
     if (!file) return;
@@ -24,50 +23,45 @@ export function UploadForm() {
         setUpload({ progress: 0, status: "error", error: "Failed to create upload" });
         return;
       }
-      const { id, uploadUrl } = await res.json();
+      const { id } = await res.json();
       setUpload((prev) => ({ ...prev, videoId: id }));
 
-      const tusUpload = new tus.Upload(file, {
-        endpoint: uploadUrl,
-        retryDelays: [0, 1000, 3000, 5000],
-        chunkSize: 5 * 1024 * 1024,
-        metadata: {
-          filename: file.name,
-          filetype: file.type,
-        },
-        onError: (err) => {
-          setUpload({ progress: 0, status: "error", error: err.message });
-        },
-        onProgress: (bytesUploaded, bytesTotal) => {
-          const progress = Math.round((bytesUploaded / bytesTotal) * 100);
-          setUpload((prev) => ({ ...prev, progress, status: "uploading" }));
-        },
-        onSuccess: () => {
-          setUpload((prev) => ({ ...prev, progress: 100, status: "done" }));
-        },
-      });
+      const formData = new FormData();
+      formData.append("file", file);
 
-      uploadRef.current = tusUpload;
-      tusUpload.start();
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          setUpload((prev) => ({ ...prev, progress: pct, status: "uploading" }));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 201 || xhr.status === 200) {
+          setUpload((prev) => ({ ...prev, progress: 100, status: "done" }));
+        } else {
+          setUpload({ progress: 0, status: "error", error: "Upload failed" });
+        }
+      };
+
+      xhr.onerror = () => {
+        setUpload({ progress: 0, status: "error", error: "Upload failed" });
+      };
+
+      xhr.open("POST", `/api/videos/${id}/upload`);
+      xhr.send(formData);
     } catch (err) {
       setUpload({ progress: 0, status: "error", error: String(err) });
     }
   }, [file]);
 
-  const pauseUpload = useCallback(() => {
-    uploadRef.current?.abort();
-    setUpload((prev) => ({ ...prev, status: "paused" }));
-  }, []);
-
-  const resumeUpload = useCallback(() => {
-    uploadRef.current?.start();
-    setUpload((prev) => ({ ...prev, status: "uploading" }));
-  }, []);
-
   const resetUpload = useCallback(() => {
     setFile(null);
     setUpload({ progress: 0, status: "idle" });
-    uploadRef.current = null;
+    xhrRef.current = null;
   }, []);
 
   return (
@@ -91,7 +85,7 @@ export function UploadForm() {
         </div>
       )}
 
-      {(upload.status === "uploading" || upload.status === "paused") && (
+      {upload.status === "uploading" && (
         <div className="space-y-2">
           <div className="w-full bg-muted rounded-full h-4">
             <div
@@ -100,15 +94,6 @@ export function UploadForm() {
             />
           </div>
           <p className="text-sm text-muted-foreground">{upload.progress}% uploaded</p>
-          {upload.status === "uploading" ? (
-            <button onClick={pauseUpload} className="px-4 py-2 bg-secondary text-secondary-foreground rounded">
-              Pause
-            </button>
-          ) : (
-            <button onClick={resumeUpload} className="px-4 py-2 bg-primary text-primary-foreground rounded">
-              Resume
-            </button>
-          )}
         </div>
       )}
 

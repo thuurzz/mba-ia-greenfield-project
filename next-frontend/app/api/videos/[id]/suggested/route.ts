@@ -3,9 +3,10 @@ import { env } from "@/lib/env";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const response = await fetch(`${env.API_URL}/videos/${params.id}/suggested`);
+  const { id } = await params;
+  const response = await fetch(`${env.API_URL}/videos/${id}/suggested`);
   if (!response.ok) {
     return NextResponse.json([], { status: 200 });
   }

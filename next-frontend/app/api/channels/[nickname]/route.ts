@@ -3,10 +3,11 @@ import { env } from "@/lib/env";
 import { getSession } from "@/lib/auth/session";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { nickname: string } }
+  _request: Request,
+  { params }: { params: Promise<{ nickname: string }> }
 ) {
-  const response = await fetch(`${env.API_URL}/channels/${params.nickname}`);
+  const { nickname } = await params;
+  const response = await fetch(`${env.API_URL}/channels/${nickname}`);
   if (!response.ok) {
     return NextResponse.json({ error: "CHANNEL_NOT_FOUND" }, { status: 404 });
   }
@@ -16,8 +17,9 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { nickname: string } }
+  { params }: { params: Promise<{ nickname: string }> }
 ) {
+  await params;
   const session = await getSession();
   if (!session.isLoggedIn) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });

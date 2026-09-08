@@ -13,7 +13,7 @@ export function SubscribeButton({ channelId, initialSubscriberCount = 0 }: Subsc
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/channels/${channelId}/subscribe`)
+    fetch(`/api/channels/subscribed?channelId=${channelId}`)
       .then(r => r.json())
       .then(d => {
         setSubscribed(d.isSubscribed);
@@ -25,8 +25,10 @@ export function SubscribeButton({ channelId, initialSubscriberCount = 0 }: Subsc
     setLoading(true);
     try {
       const endpoint = subscribed ? "unsubscribe" : "subscribe";
-      const res = await fetch(`/api/channels/${channelId}/${endpoint}`, {
+      const res = await fetch(`/api/channels/${endpoint}`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId }),
       });
       if (res.status === 401) {
         alert("Please log in to subscribe");

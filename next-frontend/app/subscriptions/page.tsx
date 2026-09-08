@@ -1,6 +1,6 @@
-import { env } from "@/lib/env";
 import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
+import { authedFetch } from "@/lib/api/authed-fetch";
 
 interface Subscription {
   channel: { id: string; name: string; nickname: string };
@@ -16,10 +16,9 @@ export default async function SubscriptionsPage({
 
   const params = await searchParams;
   const cursor = params.cursor || "";
-  const url = `${env.API_URL}/subscriptions?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${session.accessToken}` },
-  });
+  const qs = `limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+  const res = await authedFetch(`/subscriptions?${qs}`);
+  if (res.status === 401) redirect("/login");
   const data = await res.json();
   const subs: Subscription[] = data.subscriptions || [];
 

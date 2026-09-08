@@ -63,7 +63,7 @@ export class VideosService {
   ): Promise<{ videos: Video[]; nextCursor: string | null }> {
     const qb = this.videoRepository.createQueryBuilder('v')
       .where('v.channel_id = :channelId', { channelId })
-      .orderBy('v.created_at', 'DESC')
+      .orderBy('v.createdAt', 'DESC')
       .take(opts.limit + 1);
 
     if (opts.cursor) {
@@ -86,7 +86,7 @@ export class VideosService {
       .andWhere('v.status = :status', { status: VideoStatus.READY })
       .andWhere('v.published_at IS NOT NULL')
       .andWhere('v.visibility = :vis', { vis: 'public' })
-      .orderBy('v.published_at', 'DESC')
+      .orderBy('v.publishedAt', 'DESC')
       .take(opts.limit + 1);
 
     if (opts.cursor) {
@@ -136,7 +136,7 @@ export class VideosService {
       .where('v.status = :status', { status: VideoStatus.READY })
       .andWhere('v.published_at IS NOT NULL')
       .andWhere('v.visibility = :vis', { vis: 'public' })
-      .orderBy('v.published_at', 'DESC')
+      .orderBy('v.publishedAt', 'DESC')
       .take(limit + 1);
     if (categoryId) qb.andWhere('v.category_id = :catId', { catId: categoryId });
     if (cursor) qb.andWhere('v.id < :cursor', { cursor });
@@ -151,7 +151,7 @@ export class VideosService {
       .andWhere('v.published_at IS NOT NULL')
       .andWhere('v.visibility = :vis', { vis: 'public' })
       .andWhere('(v.title ILIKE :query OR channel.name ILIKE :query)', { query: `%${query}%` })
-      .orderBy('v.published_at', 'DESC')
+      .orderBy('v.publishedAt', 'DESC')
       .take(limit + 1);
     if (cursor) qb.andWhere('v.id < :cursor', { cursor });
     const videos = await qb.getMany();

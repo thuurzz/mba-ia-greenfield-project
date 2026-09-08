@@ -16,6 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { VideosService } from './videos.service';
+import { VideoStatus } from './video.entity';
 import { LikesService } from './likes.service';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { ChannelsService } from '../channels/channels.service';
@@ -46,8 +47,35 @@ export class VideosController {
     const video = await this.videosService.createDraft(channel.id);
     return {
       id: video.id,
-      uploadUrl: `/api/videos/upload/${video.id}`,
+      uploadUrl: `${video.id}`,
     };
+  }
+
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @Param('id') id: string,
+    @UploadedFile() file: any,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const channel = await this.channelsService.findByUserId(user.sub);
+    if (!channel) throw new NotFoundException('CHANNEL_NOT_FOUND');
+    const video = await this.videosService.findById(id);
+    if (!video || video.channelId !== channel.id) {
+      throw new NotFoundException('VIDEO_NOT_FOUND');
+    }
+    const ext = file.originalname?.split('.').pop() || 'mp4';
+    const key = `videos/${id}/source.${ext}`;
+    await this.storageService.uploadFile(key, file.buffer, file.mimetype);
+    await this.videosService.updateVideoMetadata(id, {
+      storagePath: key,
+      originalFileName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      status: VideoStatus.READY,
+      publishedAt: new Date(),
+    });
+    return { success: true, id, storagePath: key };
   }
 
   @Patch(':id')
@@ -196,11 +224,32 @@ export class VideosController {
     @Res() res: Response,
   ) {
     const video = await this.videosService.findById(id);
-    if (!video || !video.hlsPlaylistUrl) {
-      throw new NotFoundException('Video not found or not ready');
+    if (!video) {
+      throw new NotFoundException('Video not found');
     }
 
     const splat = req.params[0] || '';
+
+    // Fallback: HLS not ready — serve the raw source so playback works while processing
+    if (!video.hlsPlaylistUrl) {
+      if (!video.storagePath) {
+        throw new NotFoundException('Video not ready for streaming');
+      }
+      try {
+        const sourceStream = await this.storageService.getFileStream(
+          video.storagePath,
+        );
+        res.setHeader('Content-Type', 'video/mp4');
+        res.setHeader('Accept-Ranges', 'none');
+        sourceStream.pipe(res);
+      } catch {
+        res
+          .status(404)
+          .json({ error: 'FILE_NOT_FOUND', message: 'Source not found' });
+      }
+      return;
+    }
+
     const key = `videos/${id}/hls/${splat}`;
 
     try {

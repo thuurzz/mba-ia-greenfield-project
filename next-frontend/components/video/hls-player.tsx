@@ -17,6 +17,12 @@ export function HlsPlayer({ src, poster, autoplay }: HlsPlayerProps) {
     const video = videoRef.current;
     if (!video) return;
 
+    // Plain MP4 source — native playback, no hls.js
+    if (!src.endsWith(".m3u8")) {
+      video.src = src;
+      return;
+    }
+
     let hls: Hls | null = null;
 
     if (Hls.isSupported()) {

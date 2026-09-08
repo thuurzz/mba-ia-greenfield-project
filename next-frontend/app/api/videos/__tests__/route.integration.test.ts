@@ -34,12 +34,11 @@ beforeEach(async () => {
 });
 
 describe("POST /api/videos", () => {
-  it("returns 201 with video id and upload url on success", async () => {
+  it("returns 201 with video id on success", async () => {
     const res = await POST();
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body).toHaveProperty("id");
-    expect(body).toHaveProperty("uploadUrl");
     expect(typeof body.id).toBe("string");
   });
 

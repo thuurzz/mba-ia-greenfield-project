@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { env } from "@/lib/env";
+import { authedFetch } from "@/lib/api/authed-fetch";
 
 interface Video {
   id: string;
@@ -23,10 +23,9 @@ export default async function DashboardPage({
   const params = await searchParams;
   const status = params.status || "";
   const cursor = params.cursor || "";
-  const url = `${env.API_URL}/videos?limit=20${status ? `&status=${status}` : ""}${cursor ? `&cursor=${cursor}` : ""}`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${session.accessToken}` },
-  });
+  const qs = `limit=20${status ? `&status=${status}` : ""}${cursor ? `&cursor=${cursor}` : ""}`;
+  const response = await authedFetch(`/videos?${qs}`);
+  if (response.status === 401) redirect("/login");
   const data = await response.json();
   const videos: Video[] = data.videos || [];
 

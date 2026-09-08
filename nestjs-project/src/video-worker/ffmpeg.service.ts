@@ -49,9 +49,6 @@ export class FfmpegService {
 
       const variants = [
         { name: '360p', scale: '-2:360', bitrate: '600k', abr: '48k' },
-        { name: '480p', scale: '-2:480', bitrate: '1000k', abr: '64k' },
-        { name: '720p', scale: '-2:720', bitrate: '2500k', abr: '96k' },
-        { name: '1080p', scale: '-2:1080', bitrate: '5000k', abr: '128k' },
       ];
 
       for (const variant of variants) {

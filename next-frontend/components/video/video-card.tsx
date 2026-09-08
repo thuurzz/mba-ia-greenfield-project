@@ -10,7 +10,7 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ video }: VideoCardProps) {
-  const date = new Date(video.createdAt).toLocaleDateString();
+  const date = new Date(video.createdAt).toISOString().slice(0, 10);
 
   return (
     <a href={`/watch/${video.id}`} className="group">

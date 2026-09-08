@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 export const handlers = [
   http.post(`${env.API_URL}/videos`, () => {
     return HttpResponse.json(
-      { id: "01ARZ3NDEKTSV4RRFFQ69G5FAV", uploadUrl: "/api/videos/upload/01ARZ3NDEKTSV4RRFFQ69G5FAV" },
+      { id: "01ARZ3NDEKTSV4RRFFQ69G5FAV" },
       { status: 201 }
     );
   }),
@@ -50,6 +50,10 @@ export const handlers = [
       { id: "sug-1", title: "Suggested 1", thumbnailUrl: null, viewCount: 10 },
       { id: "sug-2", title: "Suggested 2", thumbnailUrl: null, viewCount: 20 },
     ]);
+  }),
+
+  http.post(`${env.API_URL}/videos/:id/upload`, () => {
+    return HttpResponse.json({ success: true });
   }),
 
   http.get(`${env.API_URL}/videos/home`, () => {

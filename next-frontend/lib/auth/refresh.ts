@@ -14,7 +14,7 @@ async function tryRefresh(): Promise<boolean> {
   });
 
   if (!res.ok) {
-    await destroySession();
+    await safeDestroySession();
     return false;
   }
 
@@ -24,19 +24,36 @@ async function tryRefresh(): Promise<boolean> {
   };
 
   if (!data.access_token || !data.refresh_token) {
-    await destroySession();
+    await safeDestroySession();
     return false;
   }
 
-  await setSession({
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token,
-    userId: session.userId,
-    email: session.email,
-    channelSlug: session.channelSlug,
-  });
+  try {
+    await setSession({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      userId: session.userId,
+      email: session.email,
+      channelSlug: session.channelSlug,
+    });
+    return true;
+  } catch {
+    // Cookie modification is not allowed during RSC render (Next.js restriction).
+    // Refresh itself succeeded — report failure so the caller redirects to login.
+    return false;
+  }
+}
 
-  return true;
+/**
+ * destroySession throws when called during an RSC render (cookies read-only).
+ * Swallow the error — the caller falls back to redirecting to /login.
+ */
+async function safeDestroySession(): Promise<void> {
+  try {
+    await destroySession();
+  } catch {
+    // read-only cookies during RSC render — ignore
+  }
 }
 
 function refreshOnce(): Promise<boolean> {
