@@ -34,6 +34,9 @@ docker compose exec nestjs-api npm run start:dev
 Services:
 - `nestjs-api` — NestJS API, port `3000`
 - `db` — PostgreSQL 17, port `5432`, database `streamtube`, user/password `streamtube`
+- `minio` — MinIO S3-compatible object storage, port `9000` (API) and `9001` (console)
+- `redis` — Redis 7, port `6379`
+- `mailpit` — Mailpit SMTP server for email testing, port `1025` (SMTP) and `8025` (Web UI)
 
 All verification and teardown commands run on the **host machine**:
 
@@ -146,8 +149,61 @@ Whenever possible, prefer storing only the bare address in `.env` and composing 
 
 NestJS with standard module structure. Source lives in `src/`, compiled output in `dist/`.
 
-- Each domain feature gets its own module (e.g., `UsersModule`, `VideosModule`) registered in `AppModule`
+- Each domain feature gets its own module (e.g., `UsersModule`, `VideosModule`, `SocialModule`, `VideoWorkerModule`) registered in `AppModule`
 - Controllers handle HTTP routing; Services hold business logic; both are scoped to their module
+- Workers (BullMQ processors) live in separate modules with `@Processor()` decorators, e.g., `VideoProcessor` in `VideoWorkerModule`
+
+## Videos Module
+
+The videos module (`src/videos/`) handles the full video lifecycle:
+
+- **Entities:** `Video` (ULID PK, status lifecycle, visibility), `VideoView` (IP-based view dedup), `VideoLike` (toggle like/dislike), `Category` (seeded categories), `Comment` (single-level nesting), `CommentLike`
+- **Storage:** MinIO/S3 via `StorageService` (`@aws-sdk/client-s3`) — upload, download, presigned URLs, bucket management
+- **Upload:** tus resumable protocol via `@tus/server` — chunked uploads up to 10GB, pause/resume
+- **Processing:** BullMQ queue `video-processing` — FFmpeg transcoding to HLS (1080p/720p/480p/360p), thumbnail extraction, metadata extraction
+- **Endpoints:** Create draft, tus upload (HEAD/PATCH/OPTIONS), stream HLS, download, update metadata, upload thumbnail, view tracking, like/dislike, CRUD comments
+- **Worker:** `VideoWorkerModule` with `VideoProcessor` consuming queue jobs via `FfmpegService`
+
+### Key files:
+
+| File | Purpose |
+|------|---------|
+| `src/videos/video.entity.ts` | Video entity with status, visibility, counters |
+| `src/videos/video-view.entity.ts` | View tracking with IP dedup index |
+| `src/videos/video-like.entity.ts` | Like/dislike with unique (video_id, user_id) |
+| `src/videos/videos.service.ts` | Video CRUD, view tracking, suggestions, home listing, search |
+| `src/videos/videos.controller.ts` | REST endpoints for video operations |
+| `src/videos/likes.service.ts` | Like/dislike toggle logic |
+| `src/videos/storage.service.ts` | MinIO/S3 file operations |
+| `src/videos/storage.module.ts` | Global storage module |
+| `src/videos/category.entity.ts` | Seedable categories |
+| `src/videos/categories.service.ts` | Category listing |
+| `src/videos/comments/` | Comment CRUD, nesting, likes |
+| `src/video-worker/` | BullMQ processor + FFmpeg service |
+| `src/config/storage.config.ts` | MinIO/S3 env config (registerAs) |
+| `src/config/queue.config.ts` | Redis/BullMQ env config (registerAs) |
+
+### Status lifecycle:
+
+`draft` → `uploading` → `processing` → `ready` | `failed`
+
+### Docker Compose services:
+
+- `minio` — S3-compatible object storage (`minio/minio`, ports 9000/9001)
+- `redis` — BullMQ queue backend (`redis:7-alpine`, port 6379)
+
+### Migration commands:
+
+```bash
+npm run migration:run    # Apply pending migrations
+npm run typeorm -- migration:generate -d src/database/data-source.ts src/database/migrations/<Name>
+```
+
+### Seed:
+
+```bash
+npm run seed    # Seeds 12 categories (Music, Gaming, Education, etc.)
+```
 
 ## Code Conventions
 

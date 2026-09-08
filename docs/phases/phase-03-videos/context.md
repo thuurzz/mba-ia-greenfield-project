@@ -1,6 +1,6 @@
 ---
 kind: phase
-name: phase-03-upload-processing
+name: phase-03-videos
 sources_mtime:
   docs/project-plan.md: "2026-08-31 22:18:23.872559222 -0300"
   docs/decisions/technical-decisions-upload-processing.md: "2026-08-31 23:19:40.539240480 -0300"
@@ -15,7 +15,7 @@ sources_mtime:
   .claude/skills/testing-guide-next-frontend/SKILL.md: "2026-08-31 22:18:23.773628364 -0300"
 ---
 
-# phase-03-upload-processing — Context
+# phase-03-videos — Context
 
 ## Scope
 

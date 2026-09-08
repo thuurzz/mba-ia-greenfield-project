@@ -12,7 +12,7 @@ sources_mtime:
   docs/phases/phase-01-configuracao-base/context.md: "2026-08-31 22:18:23.871746970 -0300"
   docs/phases/phase-02-auth/context.md: "2026-08-31 22:18:23.872182547 -0300"
   docs/phases/phase-02-auth-frontend/context.md: "2026-08-31 22:18:23.871797307 -0300"
-  docs/phases/phase-03-upload-processing/context.md: "2026-08-31 23:21:35.508204031 -0300"
+  docs/phases/phase-03-videos/context.md: "2026-08-31 23:21:35.508204031 -0300"
   .claude/skills/testing-guide-nestjs-project/SKILL.md: "2026-08-31 22:18:23.772557281 -0300"
   .claude/skills/testing-guide-next-frontend/SKILL.md: "2026-08-31 22:18:23.773628364 -0300"
 ---

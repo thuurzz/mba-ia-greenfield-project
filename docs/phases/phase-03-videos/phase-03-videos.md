@@ -1,9 +1,9 @@
 ---
 kind: phase
-name: phase-03-upload-processing
+name: phase-03-videos
 test_specs_aware: true
 sources_mtime:
-  docs/phases/phase-03-upload-processing/context.md: "2026-08-31 23:09:58.569671908 -0300"
+  docs/phases/phase-03-videos/context.md: "2026-08-31 23:09:58.569671908 -0300"
   docs/decisions/technical-decisions-upload-processing.md: "2026-08-31 23:19:40.539240480 -0300"
   docs/decisions/technical-decisions-openapi-docs-nestjs.md: "2026-08-31 22:18:23.870206069 -0300"
   docs/decisions/technical-decisions-next-frontend-config-base.md: "2026-08-31 22:18:23.870073071 -0300"

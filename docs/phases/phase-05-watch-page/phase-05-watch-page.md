@@ -9,7 +9,7 @@ sources_mtime:
   docs/decisions/technical-decisions-next-frontend-config-base.md: "2026-08-31 22:18:23.870073071 -0300"
   docs/decisions/technical-decisions-next-frontend-openapi-typing.md: "2026-08-31 22:18:23.870206069 -0300"
   docs/decisions/technical-decisions-next-frontend-msw-foundation.md: "2026-08-31 22:18:23.870206069 -0300"
-  docs/phases/phase-03-upload-processing/context.md: "2026-08-31 23:21:35.508204031 -0300"
+  docs/phases/phase-03-videos/context.md: "2026-08-31 23:21:35.508204031 -0300"
   docs/phases/phase-04-video-management/context.md: "2026-09-01 20:04:55.062420711 -0300"
   .claude/skills/testing-guide-nestjs-project/SKILL.md: "2026-08-31 22:18:23.772557281 -0300"
   .claude/skills/testing-guide-next-frontend/SKILL.md: "2026-08-31 22:18:23.773628364 -0300"

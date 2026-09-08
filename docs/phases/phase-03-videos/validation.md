@@ -1,10 +1,10 @@
 ---
 kind: phase
-name: phase-03-upload-processing
+name: phase-03-videos
 status: clean
 issue_count: 0
 sources_mtime:
-  docs/phases/phase-03-upload-processing/context.md: "2026-08-31 23:09:58.569671908 -0300"
+  docs/phases/phase-03-videos/context.md: "2026-08-31 23:09:58.569671908 -0300"
   docs/decisions/technical-decisions-upload-processing.md: "2026-08-31 23:02:15.737518145 -0300"
 issues:
   - id: MD-1
@@ -13,7 +13,7 @@ issues:
     resolved_by: upload-processing/TD-07
 ---
 
-# phase-03-upload-processing — Validation
+# phase-03-videos — Validation
 
 ## Findings
 
