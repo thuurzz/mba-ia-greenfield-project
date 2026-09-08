@@ -26,6 +26,9 @@ export class Channel {
   @Column({ type: 'uuid', unique: true })
   user_id: string;
 
+  @Column({ name: 'subscriber_count', type: 'integer', default: 0 })
+  subscriberCount: number;
+
   @CreateDateColumn()
   created_at: Date;
 
