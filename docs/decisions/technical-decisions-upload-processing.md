@@ -1,7 +1,7 @@
 ---
 scope_type: phase
 related_phases: [3]
-status: pending
+status: decided
 date: 2026-08-31
 scope_description: "Object storage, upload protocol, message queue, video processing worker, streaming strategy, unique video identifiers for Phase 03 — Upload e Processamento de Vídeos"
 ---

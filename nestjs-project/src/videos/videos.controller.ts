@@ -117,6 +117,28 @@ export class VideosController {
   }
 
   @Public()
+  @Get('home')
+  async findHome(
+    @Query('categoryId') categoryId?: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.videosService.findHomeVideos(
+      cursor, parseInt(limit || '20', 10), categoryId ? parseInt(categoryId, 10) : undefined,
+    );
+  }
+
+  @Public()
+  @Get('search')
+  async search(
+    @Query('q') q: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.videosService.search(q, cursor, parseInt(limit || '20', 10));
+  }
+
+  @Public()
   @Get(':id/suggested')
   async findSuggested(@Param('id') id: string) {
     const video = await this.videosService.findById(id);

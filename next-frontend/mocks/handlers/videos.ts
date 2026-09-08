@@ -52,6 +52,25 @@ export const handlers = [
     ]);
   }),
 
+  http.get(`${env.API_URL}/videos/home`, () => {
+    return HttpResponse.json({
+      videos: [
+        { id: "home-1", title: "Home Video 1", thumbnailUrl: null, viewCount: 100, createdAt: "2026-09-01T00:00:00Z", channel: { id: "ch-1", name: "Test Channel", nickname: "test" } },
+        { id: "home-2", title: "Home Video 2", thumbnailUrl: null, viewCount: 50, createdAt: "2026-09-01T01:00:00Z", channel: { id: "ch-1", name: "Test Channel", nickname: "test" } },
+      ],
+      nextCursor: null,
+    });
+  }),
+
+  http.get(`${env.API_URL}/videos/search`, () => {
+    return HttpResponse.json({
+      videos: [
+        { id: "search-1", title: "Search Result 1", thumbnailUrl: null, viewCount: 10, createdAt: "2026-09-01T00:00:00Z", channel: { id: "ch-1", name: "Test Channel", nickname: "test" } },
+      ],
+      nextCursor: null,
+    });
+  }),
+
   http.get(`${env.API_URL}/videos/channel/:nickname`, () => {
     return HttpResponse.json({
       videos: [

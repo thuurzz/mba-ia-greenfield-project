@@ -129,4 +129,32 @@ export class VideosService {
     const fallbackFiltered = fallback.filter(v => !excludedIds.has(v.id)).slice(0, needed);
     return [...filtered, ...fallbackFiltered];
   }
+
+  async findHomeVideos(cursor?: string, limit = 20, categoryId?: number) {
+    const qb = this.videoRepository.createQueryBuilder('v')
+      .leftJoinAndSelect('v.channel', 'channel')
+      .where('v.status = :status', { status: VideoStatus.READY })
+      .andWhere('v.published_at IS NOT NULL')
+      .andWhere('v.visibility = :vis', { vis: 'public' })
+      .orderBy('v.published_at', 'DESC')
+      .take(limit + 1);
+    if (categoryId) qb.andWhere('v.category_id = :catId', { catId: categoryId });
+    if (cursor) qb.andWhere('v.id < :cursor', { cursor });
+    const videos = await qb.getMany();
+    return { videos: videos.slice(0, limit), nextCursor: videos.length > limit ? videos[limit - 1].id : null };
+  }
+
+  async search(query: string, cursor?: string, limit = 20) {
+    const qb = this.videoRepository.createQueryBuilder('v')
+      .leftJoinAndSelect('v.channel', 'channel')
+      .where('v.status = :status', { status: VideoStatus.READY })
+      .andWhere('v.published_at IS NOT NULL')
+      .andWhere('v.visibility = :vis', { vis: 'public' })
+      .andWhere('(v.title ILIKE :query OR channel.name ILIKE :query)', { query: `%${query}%` })
+      .orderBy('v.published_at', 'DESC')
+      .take(limit + 1);
+    if (cursor) qb.andWhere('v.id < :cursor', { cursor });
+    const videos = await qb.getMany();
+    return { videos: videos.slice(0, limit), nextCursor: videos.length > limit ? videos[limit - 1].id : null };
+  }
 }
