@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -10,6 +10,8 @@ import { StorageService } from '../videos/storage.service';
 
 @Injectable()
 export class FfmpegService {
+  private readonly logger = new Logger(FfmpegService.name);
+
   constructor(
     @InjectRepository(Video)
     private videoRepository: Repository<Video>,
@@ -44,7 +46,7 @@ export class FfmpegService {
       await fs.writeFile(sourcePath, Buffer.concat(chunks));
 
       const metadata = await this.extractMetadata(sourcePath);
-      const thumbnailPath = `${tempDir}/thumbnail.webp`;
+      const thumbnailPath = `${tempDir}/thumbnail.jpg`;
       await this.generateThumbnail(sourcePath, thumbnailPath);
 
       const variants = [
@@ -64,12 +66,12 @@ export class FfmpegService {
       const hlsBaseKey = `videos/${videoId}/hls`;
       await this.uploadDirectory(outputDir, hlsBaseKey);
 
-      const thumbnailKey = `thumbnails/${videoId}.webp`;
+      const thumbnailKey = `thumbnails/${videoId}.jpg`;
       const thumbnailData = await fs.readFile(thumbnailPath);
       await this.storageService.uploadFile(
         thumbnailKey,
         thumbnailData,
-        'image/webp',
+        'image/jpeg',
       );
 
       await this.videoRepository.update(videoId, {
@@ -102,7 +104,7 @@ export class FfmpegService {
         if (code !== 0)
           return reject(new Error(`ffprobe exited with code ${code}`));
         try {
-          const info = JSON.parse(output);
+          const info = JSON.parse(output) as { format?: { duration?: string } };
           resolve({
             duration: Math.round(parseFloat(info.format?.duration || '0')),
           });
@@ -114,12 +116,14 @@ export class FfmpegService {
     });
   }
 
-  private generateThumbnail(
+  private async generateThumbnail(
     inputPath: string,
     outputPath: string,
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const proc = spawn('ffmpeg', [
+    // Try scene-detection first (nicer frame); fall back to a fixed mid-video frame.
+    // ffmpeg exits 0 even when no frames were encoded — verify the output file exists.
+    try {
+      await this.runFfmpeg([
         '-i',
         inputPath,
         '-vf',
@@ -130,10 +134,45 @@ export class FfmpegService {
         '3',
         outputPath,
       ]);
+      if (await this.fileExists(outputPath)) return;
+    } catch {
+      // fall through to fallback
+    }
+
+    await this.runFfmpeg([
+      '-i',
+      inputPath,
+      '-ss',
+      '1',
+      '-frames:v',
+      '1',
+      '-q:v',
+      '3',
+      outputPath,
+    ]);
+    if (!(await this.fileExists(outputPath))) {
+      throw new Error('Thumbnail generation produced no output');
+    }
+  }
+
+  private async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.access(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private runFfmpeg(args: string[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const proc = spawn('ffmpeg', args);
       proc.on('close', (code) => {
-        code === 0
-          ? resolve()
-          : reject(new Error(`Thumbnail generation failed with code ${code}`));
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`ffmpeg exited with code ${code}`));
+        }
       });
       proc.on('error', reject);
     });
@@ -168,13 +207,15 @@ export class FfmpegService {
         `${outputDir}/playlist.m3u8`,
       ]);
       proc.on('close', (code) => {
-        code === 0
-          ? resolve()
-          : reject(
-              new Error(
-                `HLS transcoding ${variant.name} failed with code ${code}`,
-              ),
-            );
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(
+            new Error(
+              `HLS transcoding ${variant.name} failed with code ${code}`,
+            ),
+          );
+        }
       });
       proc.on('error', reject);
     });

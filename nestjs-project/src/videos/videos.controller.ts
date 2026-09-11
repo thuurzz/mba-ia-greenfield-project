@@ -15,6 +15,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
+
+interface UploadedVideoFile {
+  buffer: Buffer;
+  size: number;
+  mimetype: string;
+  originalname: string;
+}
 import { VideosService } from './videos.service';
 import { VideoStatus } from './video.entity';
 import { LikesService } from './likes.service';
@@ -55,7 +62,7 @@ export class VideosController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Param('id') id: string,
-    @UploadedFile() file: any,
+    @UploadedFile() file: UploadedVideoFile | undefined,
     @CurrentUser() user: JwtPayload,
   ) {
     const channel = await this.channelsService.findByUserId(user.sub);
@@ -63,6 +70,9 @@ export class VideosController {
     const video = await this.videosService.findById(id);
     if (!video || video.channelId !== channel.id) {
       throw new NotFoundException('VIDEO_NOT_FOUND');
+    }
+    if (!file) {
+      throw new BadRequestException('FILE_REQUIRED');
     }
     const ext = file.originalname?.split('.').pop() || 'mp4';
     const key = `videos/${id}/source.${ext}`;
@@ -72,10 +82,16 @@ export class VideosController {
       originalFileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
-      status: VideoStatus.READY,
+      status: VideoStatus.PROCESSING,
       publishedAt: new Date(),
     });
-    return { success: true, id, storagePath: key };
+    await this.videosService.enqueueProcessing(id);
+    return {
+      success: true,
+      id,
+      storagePath: key,
+      status: VideoStatus.PROCESSING,
+    };
   }
 
   @Patch(':id')
@@ -152,7 +168,9 @@ export class VideosController {
     @Query('limit') limit?: string,
   ) {
     return this.videosService.findHomeVideos(
-      cursor, parseInt(limit || '20', 10), categoryId ? parseInt(categoryId, 10) : undefined,
+      cursor,
+      parseInt(limit || '20', 10),
+      categoryId ? parseInt(categoryId, 10) : undefined,
     );
   }
 
@@ -175,18 +193,20 @@ export class VideosController {
   }
 
   @Post(':id/thumbnail')
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 2 * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-      if (!file.mimetype.match(/^image\/(jpeg|png|webp)$/)) {
-        cb(new BadRequestException('THUMBNAIL_INVALID_TYPE'), false);
-      }
-      cb(null, true);
-    },
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 2 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.match(/^image\/(jpeg|png|webp)$/)) {
+          cb(new BadRequestException('THUMBNAIL_INVALID_TYPE'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
   async uploadThumbnail(
     @Param('id') id: string,
-    @UploadedFile() file: any,
+    @UploadedFile() file: UploadedVideoFile | undefined,
     @CurrentUser() user: JwtPayload,
   ) {
     const channel = await this.channelsService.findByUserId(user.sub);
@@ -194,6 +214,9 @@ export class VideosController {
     const video = await this.videosService.findById(id);
     if (!video || video.channelId !== channel.id) {
       throw new NotFoundException('VIDEO_NOT_FOUND');
+    }
+    if (!file) {
+      throw new BadRequestException('FILE_REQUIRED');
     }
     const ext = file.mimetype.split('/')[1];
     const key = `thumbnails/${id}-custom.${ext}`;
