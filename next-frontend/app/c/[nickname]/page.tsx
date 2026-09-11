@@ -46,7 +46,7 @@ export default async function ChannelPage({ params, searchParams }: PageProps) {
           <a key={v.id} href={`/watch/${v.id}`} className="group">
             <div className="aspect-video bg-muted rounded-lg overflow-hidden">
               {v.thumbnailUrl ? (
-                <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                <img src={`/api/videos/${v.id}/thumbnail`} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">No thumbnail</div>
               )}

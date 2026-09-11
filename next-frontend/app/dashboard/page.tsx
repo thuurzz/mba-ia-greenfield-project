@@ -53,7 +53,7 @@ export default async function DashboardPage({
             <tr key={v.id} className="border-b hover:bg-muted/50">
               <td className="p-2">
                 {v.thumbnailUrl ? (
-                  <img src={v.thumbnailUrl} alt="" className="w-20 h-12 object-cover rounded" />
+                  <img src={`/api/videos/${v.id}/thumbnail`} alt="" className="w-20 h-12 object-cover rounded" />
                 ) : (
                   <div className="w-20 h-12 bg-muted rounded" />
                 )}
