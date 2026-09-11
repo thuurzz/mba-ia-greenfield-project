@@ -48,7 +48,7 @@ export default async function WatchPage({ params }: PageProps) {
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
-            <HlsPlayer src={streamUrl} poster={video.thumbnailUrl || undefined} />
+            <HlsPlayer src={streamUrl} poster={video.thumbnailUrl ? `/api/videos/${id}/thumbnail` : undefined} />
           </div>
           <div className="mt-4">
             <h1 className="text-xl font-bold">{video.title || "Untitled"}</h1>

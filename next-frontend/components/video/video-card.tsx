@@ -16,7 +16,7 @@ export function VideoCard({ video }: VideoCardProps) {
     <a href={`/watch/${video.id}`} className="group">
       <div className="aspect-video bg-muted rounded-lg overflow-hidden">
         {video.thumbnailUrl ? (
-          <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+          <img src={`/api/videos/${video.id}/thumbnail`} alt="" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
             No thumbnail

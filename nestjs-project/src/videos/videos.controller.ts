@@ -14,6 +14,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 
 interface UploadedVideoFile {
@@ -33,6 +34,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/auth.types';
 
 @Controller('videos')
+@SkipThrottle()
 export class VideosController {
   constructor(
     private videosService: VideosService,
@@ -226,6 +228,23 @@ export class VideosController {
   }
 
   @Public()
+  @Get(':id/thumbnail')
+  async thumbnail(@Param('id') id: string, @Res() res: Response) {
+    const video = await this.videosService.findById(id);
+    if (!video || !video.thumbnailUrl) {
+      throw new NotFoundException('Thumbnail not found');
+    }
+    try {
+      const stream = await this.storageService.getFileStream(video.thumbnailUrl);
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      stream.pipe(res);
+    } catch {
+      res.status(404).json({ error: 'FILE_NOT_FOUND', message: 'Thumbnail not found' });
+    }
+  }
+
+  @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const video = await this.videosService.findById(id);
@@ -240,7 +259,7 @@ export class VideosController {
   }
 
   @Public()
-  @Get(':id/stream/*')
+  @Get(':id/stream/*splat')
   async stream(
     @Param('id') id: string,
     @Req() req: Request,
@@ -251,7 +270,9 @@ export class VideosController {
       throw new NotFoundException('Video not found');
     }
 
-    const splat = req.params[0] || '';
+    // Express 5 wildcard captures a single segment; parse the full path manually
+    const splat = (req.params as Record<string, string>).splat ?? '';
+    const rest = req.originalUrl.split(`/stream/`)[1] ?? splat;
 
     // Fallback: HLS not ready — serve the raw source so playback works while processing
     if (!video.hlsPlaylistUrl) {
@@ -273,13 +294,13 @@ export class VideosController {
       return;
     }
 
-    const key = `videos/${id}/hls/${splat}`;
+    const key = `videos/${id}/hls/${rest}`;
 
     try {
       const stream = await this.storageService.getFileStream(key);
-      if (splat.endsWith('.m3u8')) {
+      if (rest.endsWith('.m3u8')) {
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-      } else if (splat.endsWith('.ts')) {
+      } else if (rest.endsWith('.ts')) {
         res.setHeader('Content-Type', 'video/MP2T');
       }
       stream.pipe(res);

@@ -26,7 +26,7 @@ export function SuggestedVideos({ videos }: SuggestedVideosProps) {
         >
           <div className="w-40 h-24 shrink-0 bg-muted rounded overflow-hidden">
             {v.thumbnailUrl ? (
-              <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+              <img src={`/api/videos/${v.id}/thumbnail`} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">No thumb</div>
             )}
